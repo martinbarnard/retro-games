@@ -90,6 +90,9 @@
       this.game.removeBody(this);
     }
   };
+  Invader.prototype.score = function() {
+      return 10;
+  }
 
   var createInvaders = function(game) {
     var invaders = [];

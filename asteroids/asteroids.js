@@ -1,10 +1,15 @@
 ;(function() {
   var Game = function() {
     var screen = document.getElementById("screen").getContext('2d');
-
+    this.scoreboard  = document.getElementById('scoreboard');
+    this.livesboard  = document.getElementById('lives');
     this.size = { x: screen.canvas.width, y: screen.canvas.height };
     this.center = { x: this.size.x / 2, y: this.size.y / 2 };
-
+    this.level = 0;
+    this.lives = 3;
+    this.isDead = false;
+    this.paused = false;
+    this.killed = [];
     this.bodies = [
       new Asteroid(this, { x: 75, y: 75 }, 30),
       new Asteroid(this, { x: 225, y: 75 }, 30),
@@ -13,11 +18,17 @@
     ];
 
     this.shootSound = document.getElementById("shoot-sound");
-
+    this.score = this.killed.reduce( function(prev,curr) { return +(current) + prev; }, 0);
     var self = this;
     var tick = function() {
+      var a = self.asteroids();
+      if (a.length <=0) {
+          self.livesboard.innerHTML = "Asteroids Gone!";
+
+      }
       self.update();
       self.draw(screen);
+
       requestAnimationFrame(tick);
     };
 
@@ -64,11 +75,18 @@
                   obj.velocity.y > 0)) {
         moveBody(obj, { x: obj.center.x, y: this.size.y - obj.center.y });
       }
-    }
+    },
+
+    asteroids: function() {
+        return this.bodies.filter(function(d) { return d instanceof Asteroid });
+
+    },
   };
 
   var Asteroid = function(game, center, radius) {
     this.game = game;
+    this.killed = this.game.killed;
+    this.sb = this.game.scoreboard;
     this.angle = 0;
     this.center = center;
     this.radius = radius;
@@ -94,8 +112,20 @@
           var radius = this.radius - 10;
           this.game.addBody(new Asteroid(this.game, { x: this.center.x, y: this.center.y }, radius));
           this.game.addBody(new Asteroid(this.game, { x: this.center.x, y: this.center.y }, radius));
+        };
+        if (otherBody instanceof Player) {
+            this.game.isDead = true;
+            this.game.lives--;
+            this.sb.innerHTML='Your Final Score: ' + this.game.score;
+            this.game.livesboard.innerHTML = "You Died...";
+            console.log('bodies', this.game.bodies.filter(function(d) { return d instanceof Asteroid}));
+        } else {
+            this.killed.push(this.radius);
+            this.game.score = this.killed.reduce(function(prev,curr) { return +(curr) + prev;},0);
+            this.sb.innerHTML='Score ' + this.game.score;
         }
-      }
+      };
+
     }
   };
 
@@ -175,6 +205,7 @@
     update: function() {
       moveBody(this, geom.translate(this.center, this.velocity));
 
+      // Remove the bullet from the rectangle
       var gameRect = geom.rect(this.game);
       if (this.center.x < gameRect.l || this.center.x > gameRect.r ||
           this.center.y < gameRect.t || this.center.y > gameRect.b) {
@@ -324,6 +355,11 @@
       }
     }
   };
+
+  function nextLevel(currLevel, currScore) {
+      // TODO: run the next level.
+  }
+
 
   window.addEventListener('load', function() {
     new Game();
