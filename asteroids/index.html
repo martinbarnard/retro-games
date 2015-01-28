@@ -6,14 +6,30 @@
   </head>
   <body>
     <h1>Asteroids</h1>
-    <div>
-        <div>
-            <span id="lives" style='padding-right:20px;margin-right:20px;'>Lives:</span>
-            <span id="scoreboard">Score:</span>
+    <div class="content">
+        <div style="width:100%">
+            <span id="lives" >Lives:</span>
+            <span id="scoreboard" >Score:</span>
         </div>
         <audio id="shoot-sound" src="shoot.wav"></audio>
+        <audio id="asteroid_explosion" src="asteroid_explosion.wav"></audio>
         <div></div>
-        <canvas id="screen" width="310" height="310"></canvas>
+        <canvas id="screen" width="310" height="310" style="background-color:yellow;"></canvas>
+        <span id="leaderboard" style="padding-right:10px;float:left"><b>Leaderboard</b></span>
     </div>
   </body>
+  <style>
+    .content {
+//        background-color:#ff8855;
+    }
+    canvas {
+        border:solid 1px darkgrey;
+        box-shadow: 5px 5px 12px lightgrey;
+    }
+    #leaderboard {
+        //box-shadow: 2px 2px 5px #ff8;
+        padding-top:5px;
+        height: 300px;
+    }
+  </style>
 </html>

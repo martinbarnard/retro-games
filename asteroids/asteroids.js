@@ -18,6 +18,7 @@
     ];
 
     this.shootSound = document.getElementById("shoot-sound");
+    this.astexp = document.getElementById("asteroid_explosion");
     this.score = this.killed.reduce( function(prev,curr) { return +(current) + prev; }, 0);
     var self = this;
     var tick = function() {
@@ -56,8 +57,14 @@
     },
 
     removeBody: function(body) {
+      
       var bodyIndex = this.bodies.indexOf(body);
       if (bodyIndex !== -1) {
+        if (this.bodies[bodyIndex] instanceof Asteroid) {
+            // Play asteroid death sound effect.
+            this.astexp.load();
+            this.astexp.play();
+        }
         this.bodies.splice(bodyIndex, 1);
       }
     },
@@ -118,7 +125,8 @@
             this.game.lives--;
             this.sb.innerHTML='Your Final Score: ' + this.game.score;
             this.game.livesboard.innerHTML = "You Died...";
-            console.log('bodies', this.game.bodies.filter(function(d) { return d instanceof Asteroid}));
+            // TODO: Flash screen and start next life
+            // TODO: check for zero lives
         } else {
             this.killed.push(this.radius);
             this.game.score = this.killed.reduce(function(prev,curr) { return +(curr) + prev;},0);

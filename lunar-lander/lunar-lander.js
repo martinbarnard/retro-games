@@ -66,7 +66,7 @@
 
   LandingPadLine.prototype = {
     draw: function(screen) {
-      drawLine(screen, this, 2);
+      drawLine(screen, this, 3);
     }
   };
 
