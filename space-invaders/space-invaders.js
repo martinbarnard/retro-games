@@ -88,7 +88,8 @@
     this.center = center;
     this.size = { x: 15, y: 15 };
     this.patrolX = 0;
-    this.speedX = 0.3;
+    this.speedX = 0.3;          // TODO: tie this to level
+    this.bulletChance=0.997;    // TODO: make this variable tied to level
   };
 
   Invader.prototype = {
@@ -97,7 +98,7 @@
         this.speedX = -this.speedX;
       }
 
-      if (Math.random() > 0.995 &&
+      if (Math.random() > this.bulletChance &&
           !this.game.invadersBelow(this)) {
         var bullet = new Bullet(this.game,
                                 { x: this.center.x, y: this.center.y + this.size.y / 2 },
@@ -109,9 +110,10 @@
     },
 
     draw: function(screen) {
+      // grab our new frame if necessary (updated from master tick)
       this.frame = this.game.tickFrame % this.animations.length;
+      // Draw relevant image
       screen.drawImage(this.animations[this.frame],this.center.x - this.size.x/2, this.center.y - this.size.y/2);
-//      drawRect(screen, this);
     },
 
     collision: function() {
