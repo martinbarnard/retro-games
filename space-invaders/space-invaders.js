@@ -5,8 +5,8 @@
     this.bodies = createInvaders(this).concat(new Player(this));
     this.tickFrame = 0;
     this.animationSpeed=1000;
-    this.animationTime = new Date().getTime();
-    this.bulletDelay=500;       // ms between player bullets
+    this.animationTime = new Date().getTime(); this.bulletDelay=500;       // ms between player bullets
+    this.invaderSpeed=0.3;     // TODO: variable speed for level
     this.updateFrame = function() { 
         var nd = new Date().getTime();
         return (nd - this.animationTime) > this.animationSpeed  ;
@@ -17,6 +17,7 @@
     var tick = function() {
       self.update();
       self.draw(screen);
+      self.invaderSpeed = checkInvaders(self.invaders(), self);
       requestAnimationFrame(tick);
     };
 
@@ -24,19 +25,22 @@
   };
 
   Game.prototype = {
-    update: function() {
-      reportCollisions(this.bodies);
-      var check = this.updateFrame();
-      if(check) {
-          this.tickFrame +=1 % 1000;
-          this.animationTime = new Date().getTime();
-      }
+      update: function() {
+        reportCollisions(this.bodies);
+        var check = this.updateFrame();
+        if(check) {
+            this.tickFrame +=1 % 1000;
+            this.animationTime = new Date().getTime();
+        };
 
-      for (var i = 0; i < this.bodies.length; i++) {
-        if (this.bodies[i].update !== undefined) {
-          this.bodies[i].update();
+        for (var i = 0; i < this.bodies.length; i++) {
+            if (this.bodies[i].update !== undefined) {
+            this.bodies[i].update();
+            }
         }
-      }
+    },
+    invaders: function() { 
+      return this.bodies.filter(function(b) { return b instanceof Invader })
     },
 
     draw: function(screen) {
@@ -71,6 +75,8 @@
   function getRandom(min,max) {
       return Math.floor(Math.random() * (max-min +1)) + min;
   }
+  // Invader needs a game-global for direction, so that we can go all the way to the 
+  // edge when a row is destroyed.
   var Invader = function(game, center) {
     var srcs=['invader.a.1.png', 'invader.a.2.png'];
 
@@ -78,7 +84,7 @@
     for (var i =0; i < srcs.length; i++){
         this.animations.push(new Image());
         this.animations[i].onload = function() {
-            console.log('loaded'); 
+            console.log('Invader animation ' + i + ' loaded'); 
         }
         this.animations[i].src=srcs[i];
 
@@ -88,16 +94,13 @@
     this.center = center;
     this.size = { x: 15, y: 15 };
     this.patrolX = 0;
-    this.speedX = 0.3;          // TODO: tie this to level
+    this.speedX = game.invaderSpeed;
     this.bulletChance=0.997;    // TODO: make this variable tied to level
+    console.log('speed', this.speedX);
   };
 
   Invader.prototype = {
     update: function() {
-      if (this.patrolX < 0 || this.patrolX > 30) {
-        this.speedX = -this.speedX;
-      }
-
       if (Math.random() > this.bulletChance &&
           !this.game.invadersBelow(this)) {
         var bullet = new Bullet(this.game,
@@ -105,6 +108,7 @@
                                 { x: Math.random() - 0.5, y: 2 });
         this.game.addBody(bullet);
       }
+      this.speedX = this.game.invaderSpeed;
       this.center.x += this.speedX;
       this.patrolX += this.speedX;
     },
@@ -129,6 +133,7 @@
     for (var i = 0; i < 24; i++) {
       var x = 35 + (i % 8) * 30;
       var y = 35 + (i % 3) * 30;
+      console.log('adding invader ' + i);
       invaders.push(new Invader(game, { x: x, y: y}));
     }
 
@@ -142,7 +147,7 @@
     this.keyboarder = new Keyboarder();
     this.image = new Image();
     this.image.src="ship.png";
-    this.image.onload = function() {console.log('ship loaded')};
+    this.image.onload = function() {console.log('Ship loaded')};
     this.lastBullet = 0;
   };
 
@@ -240,6 +245,16 @@
     );
   };
 
+  function checkInvaders(invaders,game) {
+      var changed = false;
+      var leftMost = invaders.filter(function(invader) {
+          return invader.center.x < (invader.size.x/2);
+      });
+      rightMost = invaders.filter(function(invader ) { 
+          return invader.center.x > (game.size.x - (invader.size.x/2));
+      });
+      return (leftMost.length >0 || rightMost.length >0) ? -game.invaderSpeed : game.invaderSpeed;
+  }
   var reportCollisions = function(bodies) {
     var bodyPairs = [];
     for (var i = 0; i < bodies.length; i++) {
