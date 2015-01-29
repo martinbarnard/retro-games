@@ -4,8 +4,14 @@
     this.size = { x: screen.canvas.width, y: screen.canvas.height };
     this.bodies = createInvaders(this).concat(new Player(this));
     this.tickFrame = 0;
+    // TODO: Score and levels
+    this.score = 0;
+    this.level = 1;
+    this.font = "bold 12px sans-serif";
+    screen.textBaseline = "top";
     this.animationSpeed=1000;
     this.animationTime = new Date().getTime(); this.bulletDelay=500;       // ms between player bullets
+    this.invaderBaseSpeed=6;
     this.invaderSpeed=0.3;     // TODO: variable speed for level
     this.updateFrame = function() { 
         var nd = new Date().getTime();
@@ -16,15 +22,36 @@
     var self = this;
     var tick = function() {
       self.update();
+      var l = self.invaders().filter(function(d) { return d.center.x < (d.size.x/2)});
+      var r = self.invaders().filter(function(d) { return d.center.x > (self.size.x - (d.size.x/2)) });
+      var bs = self.invaderBaseSpeed / self.invaders().length;
+      if( r.length > 0  ){
+        self.invaderSpeed = -bs;
+      } else if (l.length >0) {
+        self.invaderSpeed = bs;
+      };
       self.draw(screen);
-      self.invaderSpeed = checkInvaders(self.invaders(), self);
+      self.scoreText = "Score: " + self.score;// + " speed: " + self.invaderSpeed;
+      screen.fillText(self.scoreText, 5,5);
       requestAnimationFrame(tick);
+      self.newLevel();
     };
 
     tick();
   };
 
   Game.prototype = {
+      newLevel: function() {
+          if (this.invaders().length <=0){
+            this.level +=1;
+            var player = this.bodies.filter(function(b) { return b instanceof Player });
+            this.bodies = createInvaders(this).concat(player[0]);
+          }
+      },
+      invaders: function() {
+        var l = this.bodies.filter(function(d) { return d instanceof Invader });
+        return l;
+      },
       update: function() {
         reportCollisions(this.bodies);
         var check = this.updateFrame();
@@ -38,9 +65,6 @@
             this.bodies[i].update();
             }
         }
-    },
-    invaders: function() { 
-      return this.bodies.filter(function(b) { return b instanceof Invader })
     },
 
     draw: function(screen) {
@@ -92,11 +116,10 @@
     this.game = game;
     this.frame = this.game.tickFrame % this.animations.length;
     this.center = center;
-    this.size = { x: 15, y: 15 };
+    this.size = { x: this.animations[0].width, y: this.animations[0].height };
     this.patrolX = 0;
-    this.speedX = game.invaderSpeed;
-    this.bulletChance=0.997;    // TODO: make this variable tied to level
-    console.log('speed', this.speedX);
+    this.speedX = this.game.invaderSpeed;
+    this.bulletChance=0.996;    // TODO: make this variable tied to level
   };
 
   Invader.prototype = {
@@ -121,6 +144,7 @@
     },
 
     collision: function() {
+      this.game.score +=this.score();
       this.game.removeBody(this);
     }
   };
@@ -133,7 +157,6 @@
     for (var i = 0; i < 24; i++) {
       var x = 35 + (i % 8) * 30;
       var y = 35 + (i % 3) * 30;
-      console.log('adding invader ' + i);
       invaders.push(new Invader(game, { x: x, y: y}));
     }
 
@@ -147,17 +170,23 @@
     this.keyboarder = new Keyboarder();
     this.image = new Image();
     this.image.src="ship.png";
-    this.image.onload = function() {console.log('Ship loaded')};
+    this.image.onload = function() {this.size = {x: this.image.width, y:this.image.height};console.log('Ship loaded')};
     this.lastBullet = 0;
   };
 
   Player.prototype = {
     update: function() {
-      if (this.keyboarder.isDown(this.keyboarder.KEYS.LEFT)) {
-        this.center.x -= 2;
-      } else if (this.keyboarder.isDown(this.keyboarder.KEYS.RIGHT)) {
-        this.center.x += 2;
-      }
+        if (
+            (this.keyboarder.isDown(this.keyboarder.KEYS.LEFT)) && 
+            (this.center.x > (this.size.x /2)) 
+        ) {
+            this.center.x -= 2;
+        } else if (
+            (this.keyboarder.isDown(this.keyboarder.KEYS.RIGHT)) &&
+            (this.center.x  < (this.game.size.x - (this.size.x  )))
+        ) {
+            this.center.x += 2;
+        }
       var d =  (new Date().getTime() - this.lastBullet) 
       if ( this.keyboarder.isDown(this.keyboarder.KEYS.SPACE) && d > (this.game.bulletDelay)) {
         this.lastBullet = new Date().getTime();
@@ -245,16 +274,7 @@
     );
   };
 
-  function checkInvaders(invaders,game) {
-      var changed = false;
-      var leftMost = invaders.filter(function(invader) {
-          return invader.center.x < (invader.size.x/2);
-      });
-      rightMost = invaders.filter(function(invader ) { 
-          return invader.center.x > (game.size.x - (invader.size.x/2));
-      });
-      return (leftMost.length >0 || rightMost.length >0) ? -game.invaderSpeed : game.invaderSpeed;
-  }
+
   var reportCollisions = function(bodies) {
     var bodyPairs = [];
     for (var i = 0; i < bodies.length; i++) {
