@@ -1,8 +1,14 @@
 ;(function() {
   var Game = function() {
+    var pauseButton = document.getElementById('pause');
+    var resetButton = document.getElementById('reset');
+    pauseButton.addEventListener('click', pause, false);
+    resetButton.addEventListener('click', reset, false);
+    var button_debounce=0;
     var screen = document.getElementById("screen").getContext('2d');
     this.scoreboard  = document.getElementById('scoreboard');
     this.livesboard  = document.getElementById('lives');
+    this.isPaused = false;
     this.size = { x: screen.canvas.width, y: screen.canvas.height };
     this.center = { x: this.size.x / 2, y: this.size.y / 2 };
     this.level = 0;
@@ -22,17 +28,17 @@
     this.score = this.killed.reduce( function(prev,curr) { return +(current) + prev; }, 0);
     var self = this;
     var tick = function() {
-      var a = self.asteroids();
-      if (a.length <=0) {
-          self.livesboard.innerHTML = "Asteroids Gone!";
-
-      }
-      self.update();
-      self.draw(screen);
-
-      requestAnimationFrame(tick);
+        console.log('state',self.isPaused);
+        if (!self.isPaused) {
+            var a = self.asteroids();
+            if (a.length <=0) { self.livesboard.innerHTML = "Asteroids Gone!"; }
+            self.update();
+            self.draw(screen);
+            requestAnimationFrame(tick);
+        } else {
+            self.livesBoard.innerHTML="...PAUSED...";
+        };
     };
-
     tick();
   };
 
@@ -184,6 +190,9 @@
         this.game.shootSound.play();
         this.game.addBody(new Bullet(this.game, { x: this.points[1].x, y: this.points[1].y },
                                         this.angle));
+      } else if (this.keyboarder.isDown(this.keyboarder.KEYS.P) &&
+                now - this.button_debounce > 500) {
+                    this.pause;
       }
 
       moveBody(this, geom.translate(this.center, this.velocity));
@@ -366,6 +375,9 @@
 
   function nextLevel(currLevel, currScore) {
       // TODO: run the next level.
+  }
+  function pause() {
+      this.isPaused = !this.isPaused; 
   }
 
 

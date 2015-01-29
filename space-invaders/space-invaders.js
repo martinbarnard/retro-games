@@ -257,11 +257,18 @@
     this.KEYS = { LEFT: 37, RIGHT: 39, SPACE: 32 };
   };
 
+
+  /* top-left score, maybe...
+      screen.textBaseline = 'top';
+      screen.fillText('(0, 0)', 8,5);
+    */
   var drawRect = function(screen, body) {
+
     screen.fillRect(body.center.x - body.size.x / 2,
                     body.center.y - body.size.y / 2,
                     body.size.x,
                     body.size.y);
+    //screen.fillText('.', body.center.x, body.center.y);
   };
 
   var isColliding = function(b1, b2) {
